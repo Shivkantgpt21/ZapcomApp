@@ -31,6 +31,10 @@ class SectionsStateHolder @Inject constructor(
     private val _state = MutableStateFlow(initialUiState)
 
     private val sectionData = launchFlow {
+        fetchData()
+    }
+
+    private suspend fun fetchData() {
         if (connectivityHelper.isConnected()) {
             useCase(Unit).collect { result ->
                 if (result.isSuccess) {
@@ -38,6 +42,13 @@ class SectionsStateHolder @Inject constructor(
                         it.copy(
                             sections = result.getOrNull(),
                             noInternet = false,
+                            isLoading = false
+                        )
+                    }
+                } else {
+                    _state.update {
+                        it.copy(
+                            noInternet = connectivityHelper.isConnected(),
                             isLoading = false
                         )
                     }
@@ -52,8 +63,6 @@ class SectionsStateHolder @Inject constructor(
             }
         }
     }
-
-    internal
 
     val state: Flow<UiState> = combine(_state, sectionData) { internalState, _ ->
         internalState.toUiState()
@@ -91,6 +100,19 @@ class SectionsStateHolder @Inject constructor(
         title = title,
         image = image
     )
+
+    internal suspend fun onUiEvent(event: UiEvent) {
+        when (event) {
+            UiEvent.OnRetry -> {
+                _state.update {
+                    it.copy(
+                        isLoading = true
+                    )
+                }
+                fetchData()
+            }
+        }
+    }
 
     data class InternalState(
         val sections: Sections? = null,
@@ -147,7 +169,8 @@ class SectionsStateHolder @Inject constructor(
                     SectionType.HorizontalFreeScroll(
                         items = listOf(
                             ItemUiState(
-                                "Laptop", "https://images.pexels.com/photos/7974/pexels-photo.jpg"
+                                "Laptop",
+                                "https://images.pexels.com/photos/7974/pexels-photo.jpg"
                             ),
                             ItemUiState(
                                 "Hat",
@@ -162,10 +185,11 @@ class SectionsStateHolder @Inject constructor(
 
     companion object {
         private const val ERROR_MSG = "No data please try after some times"
-        private const val NO_INTERNET_MSG = "No internet please check your internet and try again"
+        private const val NO_INTERNET_MSG =
+            "No internet please check your internet and try again"
     }
 
-    sealed interface UiEvent:Event{
-        data object OnRetry: UiEvent
+    sealed interface UiEvent : Event {
+        data object OnRetry : UiEvent
     }
 }

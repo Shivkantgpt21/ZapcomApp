@@ -51,7 +51,7 @@ fun HomeScreen(
                 ErrorScreen(
                     message = uiState.message,
                     onRetryClick = {
-                        /* viewModel.fetchItems(LocalContext.current)*/
+                        viewModel.OnUiEvent(SectionsStateHolder.UiEvent.OnRetry)
                     }
                 )
             }
@@ -60,7 +60,7 @@ fun HomeScreen(
                 NoInternetScreen(
                     message = uiState.message,
                     onRetryClick = {
-                        /*viewModel.fetchItems(LocalContext.current)*/
+                        viewModel.OnUiEvent(SectionsStateHolder.UiEvent.OnRetry)
                     })
             }
         }
@@ -96,7 +96,10 @@ private fun ErrorScreen(message: String, onRetryClick: () -> Unit) {
     ) {
         Text(text = message, color = MaterialTheme.colorScheme.error)
         Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = onRetryClick) {
+        Button(
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            onClick = onRetryClick
+        ) {
             Text(text = "Retry")
         }
     }
